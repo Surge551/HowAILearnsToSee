@@ -4,8 +4,6 @@ An interactive, fully offline web page that shows a small neural network learnin
 
 ![Inside the network](docs/network.png)
 
-> **بالعربي:** موقع تفاعلي يوضّح شلون الشبكة العصبية تتعلّم تقرا الأرقام المكتوبة بخط اليد. التدريب كله يصير داخل المتصفح وما يحتاج إنترنت. طريقة التشغيل تحت.
-
 ## Features
 
 | Screen | What you see |
