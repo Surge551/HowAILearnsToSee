@@ -1,0 +1,5 @@
+* text=auto
+*.sh text eol=lf
+*.bat text eol=crlf
+data/mnist.js -diff linguist-generated
+lib/*.js -diff linguist-vendored

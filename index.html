@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f6f3">
+  <meta name="description" content="How AI Learns to See: an offline, interactive demonstration of a neural network learning handwritten digits.">
+  <title>How AI Learns to See — MNIST Lab</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="lib/tf.min.js"></script>
+  <script src="lib/chart.umd.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/model.js"></script>
+  <script src="js/draw.js"></script>
+  <script src="js/network.js"></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="How AI Learns to See home">
+        <svg class="brand-mark" aria-hidden="true" viewBox="0 0 40 40"><g fill="#c8f36b" stroke="#8db544" stroke-width=".35"><rect x="8.3" y="4.9" width="3.0" height="3.0" rx=".5"/><rect x="11.7" y="4.9" width="3.0" height="3.0" rx=".5"/><rect x="15.1" y="4.9" width="3.0" height="3.0" rx=".5"/><rect x="18.5" y="4.9" width="3.0" height="3.0" rx=".5"/><rect x="21.9" y="4.9" width="3.0" height="3.0" rx=".5"/><rect x="25.3" y="4.9" width="3.0" height="3.0" rx=".5"/><rect x="8.3" y="8.3" width="3.0" height="3.0" rx=".5"/><rect x="11.7" y="8.3" width="3.0" height="3.0" rx=".5"/><rect x="15.1" y="8.3" width="3.0" height="3.0" rx=".5"/><rect x="18.5" y="8.3" width="3.0" height="3.0" rx=".5"/><rect x="21.9" y="8.3" width="3.0" height="3.0" rx=".5"/><rect x="25.3" y="8.3" width="3.0" height="3.0" rx=".5"/><rect x="25.3" y="11.7" width="3.0" height="3.0" rx=".5"/><rect x="28.7" y="11.7" width="3.0" height="3.0" rx=".5"/><rect x="21.9" y="15.1" width="3.0" height="3.0" rx=".5"/><rect x="25.3" y="15.1" width="3.0" height="3.0" rx=".5"/><rect x="21.9" y="18.5" width="3.0" height="3.0" rx=".5"/><rect x="25.3" y="18.5" width="3.0" height="3.0" rx=".5"/><rect x="18.5" y="21.9" width="3.0" height="3.0" rx=".5"/><rect x="21.9" y="21.9" width="3.0" height="3.0" rx=".5"/><rect x="18.5" y="25.3" width="3.0" height="3.0" rx=".5"/><rect x="21.9" y="25.3" width="3.0" height="3.0" rx=".5"/><rect x="15.1" y="28.7" width="3.0" height="3.0" rx=".5"/><rect x="18.5" y="28.7" width="3.0" height="3.0" rx=".5"/><rect x="15.1" y="32.1" width="3.0" height="3.0" rx=".5"/><rect x="18.5" y="32.1" width="3.0" height="3.0" rx=".5"/></g></svg>
+        <span class="brand-copy"><strong>HOW AI LEARNS TO SEE</strong></span>
+      </a>
+      <div id="model-status" class="model-status" data-state="loading" role="status" aria-live="polite">
+        <span class="status-dot"></span><span id="model-status-text">Loading data…</span>
+      </div>
+    </header>
+
+    <main>
+      <nav class="step-nav" aria-label="Screens">
+        <button class="step-link is-active" data-screen="data" type="button"><span class="step-number">01</span><span>The data</span></button>
+        <button class="step-link" data-screen="before" type="button"><span class="step-number">02</span><span>Before learning</span></button>
+        <button class="step-link" data-screen="training" type="button"><span class="step-number">03</span><span>Training</span></button>
+        <button class="step-link" data-screen="play" type="button"><span class="step-number">04</span><span>Try it</span></button>
+      </nav>
+
+      <section class="screen is-active" data-screen-panel="data" aria-labelledby="data-title">
+        <div class="screen-heading compact-heading"><div><h1 id="data-title">A picture is 784 numbers</h1><p class="lede">Each digit is a 28 × 28 grid of brightness values. Click one to see its numbers.</p></div></div>
+
+        <div class="size-picker panel">
+          <label for="data-size-number">Training images</label>
+          <input id="data-size" class="size-slider" type="range" min="0" max="1000" step="1" aria-label="Training image count">
+          <input id="data-size-number" class="size-number" type="number" min="10" max="55000" step="1" inputmode="numeric">
+          <div class="size-ticks" aria-hidden="true"><span data-value="10">10</span><span data-value="100">100</span><span data-value="1000">1k</span><span data-value="10000">10k</span><span data-value="55000">55k</span></div>
+        </div>
+
+        <div class="section-row"><h2>Real examples from MNIST</h2><button id="refresh-examples" class="button button-quiet" type="button">Show others ↻</button></div>
+        <div id="sample-grid" class="sample-grid"></div>
+      </section>
+
+      <section class="screen" data-screen-panel="before" aria-labelledby="before-title" hidden>
+        <div class="screen-heading compact-heading"><div><h1 id="before-title">Before learning</h1><p class="lede">The weights are still random, so this guess means nothing yet.</p></div></div>
+        <div class="draw-layout">
+          <div class="draw-panel panel">
+            <div class="panel-topline"><span>DRAW A DIGIT</span><button class="text-button clear-button" data-canvas="before-canvas" type="button">Clear</button></div>
+            <canvas id="before-canvas" class="draw-canvas" width="280" height="280" aria-label="Draw a handwritten digit"></canvas>
+          </div>
+          <div class="guess-panel panel">
+            <p class="eyebrow">FIRST GUESS</p>
+            <div id="before-prediction" class="big-prediction" aria-live="polite">—</div>
+            <div id="before-bars" class="confidence-bars"></div>
+          </div>
+        </div>
+        <div class="next-strip"><span>Ready to teach the network?</span><button class="button button-primary" data-go="training" type="button">Go to training →</button></div>
+      </section>
+
+      <section class="screen" data-screen-panel="training" aria-labelledby="training-title" hidden>
+        <div class="screen-heading compact-heading"><div><h1 id="training-title">Learning by correction</h1><p class="lede">After every batch of 64 images, the weights move a little to reduce the error.</p></div></div>
+        <div class="training-controls panel">
+          <div class="training-buttons"><button id="start-training" class="button button-primary" type="button">Start training</button><button id="pause-training" class="button button-outline" type="button" disabled>Pause</button><button id="resume-training" class="button button-outline" type="button" hidden>Resume</button><button id="reset-training" class="button button-quiet" type="button">Start over</button></div>
+          <div class="training-options">
+            <label class="option-field">Images <span id="train-count-chip" class="count-chip">10,000</span></label>
+            <label class="option-field">Epochs <input id="epochs" class="option-small" type="number" min="1" max="20" value="10"></label>
+            <label class="option-field">Pace <select id="training-speed" class="option-small"><option value="0">Fast</option><option value="8" selected>Normal</option><option value="30">Slow</option></select></label>
+          </div>
+        </div>
+        <div class="training-overview">
+          <div class="epoch-readout"><span>EPOCH</span><strong id="epoch-value">0 <small>of</small> 10</strong><div class="progress-track"><span id="train-progress"></span></div><small id="batch-readout">Waiting to start</small></div>
+          <div class="metric-readout"><span id="accuracy-label">ACCURACY</span><strong id="accuracy-value">—<small>%</small></strong><small id="accuracy-caption">on images it never trained on</small></div>
+          <div class="metric-readout"><span>LOSS</span><strong id="loss-value">—</strong><small>error · lower is better</small></div>
+        </div>
+
+        <div class="panel network-panel">
+          <div class="section-row">
+            <div><h2>Inside the network</h2><p>Hover a neuron to see what it does. Watch the answer change while it trains.</p></div>
+            <div class="network-controls">
+              <button id="net-prev" class="button button-outline icon-button" type="button" aria-label="Previous example">‹</button>
+              <span id="net-example" class="net-example">—</span>
+              <button id="net-next" class="button button-outline icon-button" type="button" aria-label="Next example">›</button>
+              <button id="net-replay" class="button button-outline" type="button">▶ Show the steps</button>
+            </div>
+          </div>
+          <div class="network-wrap"><canvas id="train-network" class="network-canvas" aria-label="Neural network diagram"></canvas></div>
+          <div class="network-key"><span><i class="k-green"></i>pushes toward a digit</span><span><i class="k-red"></i>pushes away</span><span><i class="k-empty"></i>silent neuron (ReLU = 0)</span></div>
+        </div>
+
+        <div class="training-grid">
+          <div class="panel chart-panel"><div class="section-row"><h2>Learning curve</h2><div class="chart-key"><span><i class="key-green"></i>accuracy</span><span><i class="key-red"></i>loss</span></div></div><div class="chart-wrap"><canvas id="learning-chart" role="img" aria-label="Learning curve for accuracy and loss"></canvas></div></div>
+          <div class="panel exam-panel"><div class="section-row"><div><h2>20 unseen images</h2><p>Click one to send it through the network</p></div><span id="exam-score" class="exam-score">— / 20</span></div><div id="exam-grid" class="exam-grid"></div></div>
+        </div>
+        <div class="next-strip"><span>The model is ready for your handwriting.</span><button class="button button-primary" data-go="play" type="button">Try it yourself →</button></div>
+      </section>
+
+      <section class="screen" data-screen-panel="play" aria-labelledby="play-title" hidden>
+        <div class="screen-heading compact-heading"><div><h1 id="play-title">What does it see?</h1><p class="lede">Draw a digit and follow it through the network.</p></div></div>
+        <div class="draw-layout play-layout">
+          <div class="draw-panel panel">
+            <div class="panel-topline"><span>DRAW A DIGIT</span><button class="text-button clear-button" data-canvas="play-canvas" type="button">Clear</button></div>
+            <canvas id="play-canvas" class="draw-canvas" width="280" height="280" aria-label="Draw a handwritten digit"></canvas>
+            <div class="processed-preview-wrap"><div><span class="eyebrow">WHAT THE NETWORK GETS</span><p>Centered and resized to 28 × 28</p></div><canvas id="processed-preview" width="28" height="28" aria-label="Processed 28 by 28 image preview"></canvas></div>
+          </div>
+          <div class="result-panel panel">
+            <div class="result-top"><p class="eyebrow">NETWORK GUESS</p><div id="play-prediction" class="big-prediction" aria-live="polite">—</div></div>
+            <div id="play-bars" class="confidence-bars"></div>
+            <div id="untrained-warning" class="notice" hidden><span>Train the model first.</span><button class="text-button" data-go="training" type="button">Go to training →</button></div>
+          </div>
+        </div>
+        <div class="panel network-panel">
+          <div class="section-row"><h2>Inside the network</h2><button id="play-replay" class="button button-outline" type="button">▶ Show the steps</button></div>
+          <div class="network-wrap"><canvas id="play-network" class="network-canvas" aria-label="Neural network diagram for your drawing"></canvas></div>
+          <div class="network-key"><span><i class="k-green"></i>pushes toward a digit</span><span><i class="k-red"></i>pushes away</span><span><i class="k-empty"></i>silent neuron (ReLU = 0)</span></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="loading-overlay" class="loading-overlay" role="status" aria-live="polite"><div class="loading-sheet"><div class="loading-glyph" aria-hidden="true"><span></span><span></span><span></span><span></span></div><p id="loading-title">Loading the dataset</p><div class="loading-track"><span id="loading-progress"></span></div></div></div>
+
+  <dialog id="pixel-dialog" class="pixel-dialog"><form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form><div class="dialog-heading"><div><p class="eyebrow">PIXEL VIEW</p><h2>Digit <strong id="dialog-label">—</strong></h2></div><p>Each square is a brightness value from 0 to 255.</p></div><div id="pixel-matrix" class="pixel-matrix" aria-label="28 by 28 pixel values"></div></dialog>
+  <div id="toast-region" class="toast-region" aria-live="polite"></div>
+</body>
+</html>
